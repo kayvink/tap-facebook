@@ -737,8 +737,9 @@ def main_impl():
         LOGGER.info("No properties were selected")
 
 def main():
-
+    LOGGER.info("Main called")
     try:
+        LOGGER.info("Trying main_impl")
         main_impl()
     except TapFacebookException as e:
         LOGGER.critical(e)
