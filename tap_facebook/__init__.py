@@ -576,6 +576,7 @@ def initialize_stream(account, catalog_entry, state): # pylint: disable=too-many
 
     name = catalog_entry.stream
     stream_alias = catalog_entry.stream_alias
+    LOGGER.info('Initializing stream with name: %s and alias: %s', catalog_entry.stream, catalog_entry.stream_alias)
 
     if name in INSIGHTS_BREAKDOWNS_OPTIONS:
         return AdsInsights(name, account, stream_alias, catalog_entry, state=state,
@@ -594,8 +595,10 @@ def initialize_stream(account, catalog_entry, state): # pylint: disable=too-many
 
 def get_streams_to_sync(account, catalog, state):
     streams = []
+    LOGGER.info('Iterating over streams')
     for stream in STREAMS:
         catalog_entry = next((s for s in catalog.streams if s.tap_stream_id == stream), None)
+        LOGGER.info('Found catalog entry: %s and it is selected: %s',catalog_entry.stream, catalog_entry.is_selected())
         if catalog_entry and catalog_entry.is_selected():
             # TODO: Don't need name and stream_alias since it's on catalog_entry
             name = catalog_entry.stream
@@ -610,6 +613,7 @@ def transform_date_hook(data, typ, schema):
     return data
 
 def do_sync(account, catalog, state):
+    LOGGER.info('Started do_sync')
     streams_to_sync = get_streams_to_sync(account, catalog, state)
     refs = load_shared_schema_refs()
     for stream in streams_to_sync:
@@ -642,6 +646,7 @@ def get_abs_path(path):
 
 
 def load_schema(stream):
+    LOGGER.info('Loading schema with name: %s', stream.name)
     path = get_abs_path('schemas/{}.json'.format(stream.name))
     field_class = stream.field_class
     schema = utils.load_json(path)
@@ -706,6 +711,7 @@ def main_impl():
     access_token = args.config['access_token']
 
     CONFIG.update(args.config)
+    LOGGER.info('Updated config with arguments: %s', args.config)
 
     global RESULT_RETURN_LIMIT
     RESULT_RETURN_LIMIT = CONFIG.get('result_return_limit', RESULT_RETURN_LIMIT)
@@ -725,6 +731,7 @@ def main_impl():
         do_discover()
     elif args.properties:
         catalog = Catalog.from_dict(args.properties)
+        LOGGER.info('Created catalog from properties: %s', catalog)
         do_sync(account, catalog, args.state)
     else:
         LOGGER.info("No properties were selected")
